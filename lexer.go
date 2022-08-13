@@ -17,6 +17,7 @@ const (
 	itmEntryType
 	itmFieldType
 	itmFieldText
+	itmTexCode
 )
 
 const (
@@ -35,19 +36,28 @@ const (
 	err
 )
 
+const (
+	entry entryT = iota
+	preamble
+	str
+)
+
 // BibTeX entry syntactic element type.
 type itmT uint8
 
-// the state of the lexer.
+// The state of the lexer.
 type state uint8
 
-// item is a single lexical syntactic element emitted by the lexer.
+// BibTeX entry type.
+type entryT uint8
+
+// Item is a single lexical syntactic element emitted by the lexer.
 type item struct {
 	t   itmT
 	val string
 }
 
-// lexer parses BibTeX entries.
+// Lexer parses BibTeX entries.
 type lexer struct {
 	reader  readable
 	items   chan item
@@ -55,6 +65,7 @@ type lexer struct {
 	state   state
 	bracers int
 	inEntry bool
+	entryT  entryT
 }
 
 // NewLexer creates a new lexer instance.
@@ -130,6 +141,13 @@ func (l *lexer) entryType() state {
 		switch c := char.val; {
 		case c == '{':
 			buf = strings.TrimSpace(buf)
+			if buf == "preamble" {
+				l.entryT = preamble
+			} else if buf == "string" {
+				l.entryT = str
+			} else {
+				l.entryT = entry
+			}
 			if !isContinuous(buf) || !isLetter(buf) {
 				return err
 			}
@@ -161,7 +179,14 @@ func (l *lexer) entryLeftBrace() state {
 			l.items <- item{t: itmLeftBrace, val: string(char.val)}
 			l.bracers++
 			l.inEntry = true
-			return entryCiteKey
+			switch l.entryT {
+			case entry:
+				return entryCiteKey
+			case preamble:
+				return entryFieldText
+			case str:
+				return entryFieldType
+			}
 		}
 	}
 }
@@ -234,7 +259,8 @@ func (l *lexer) entryComma() state {
 	}
 }
 
-// EntryTypeOrBrace checks if the next token is the field type or the end right brace.
+// EntryTypeOrBrace checks if the next token
+// is the field type or the end right brace.
 func (l *lexer) entryTypeOrBrace() state {
 	for {
 		char := l.reader.next()
@@ -299,7 +325,8 @@ func (l *lexer) entryEqSgn() state {
 	}
 }
 
-// EntryFieldText
+// EntryFieldText reads character from the reader
+// looking for the text delimiter.
 func (l *lexer) entryFieldText() state {
 	buf := ``
 	quotes := 0
@@ -415,18 +442,10 @@ func isLetter(s string) bool {
 	return true
 }
 
-// IsProperQuoted checks if the string is enclosed in quotation marks or curly
-// brackets.
+// IsProperQuoted checks if the string is enclosed
+// in quotation marks or curly brackets.
 func isProperQuoted(s string) bool {
 	if s == `` {
-		return false
-	}
-
-	if !strings.HasPrefix(s, "\"") && !strings.HasPrefix(s, "{") {
-		return false
-	}
-
-	if !strings.HasSuffix(s, "\"") && !strings.HasSuffix(s, "}") {
 		return false
 	}
 

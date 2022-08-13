@@ -5,7 +5,27 @@ import (
 	"testing"
 )
 
-var items = []item{
+var texEntry = `
+@article{Cohen1963,
+  author   = "P. J. Cohen, M. R. Thompson",
+  title    = {The independence of {,} the hypothesis},
+  journal  = "Proceedings of the {Academy} of Sciences",
+  year     = 1963,
+  volume   = "50",
+  number   = "6",
+  pages    = "1143--1148"
+}
+`
+
+var texPreamble = `
+@preamble{ "\@ifundefined{url}{\def\url#1{\texttt{#1}}}{}" }
+`
+
+var texStrings = `
+@string{goossens = "Goossens, Michel"}
+`
+
+var entryItems = []item{
 	{itmEntryDelim, `@`},
 	{itmEntryType, `article`},
 	{itmLeftBrace, `{`},
@@ -41,8 +61,26 @@ var items = []item{
 	{itmRightBrace, `}`},
 }
 
-func TestLexer(t *testing.T) {
-	r := newReader(testEntry())
+var preambleItems = []item{
+	{itmEntryDelim, `@`},
+	{itmEntryType, `preamble`},
+	{itmLeftBrace, `{`},
+	{itmFieldText, `"\@ifundefined{url}{\def\url#1{\texttt{#1}}}{}"`},
+	{itmRightBrace, `}`},
+}
+
+var stringItems = []item{
+	{itmEntryDelim, `@`},
+	{itmEntryType, `string`},
+	{itmLeftBrace, `{`},
+	{itmFieldType, `goossens`},
+	{itmEqSgn, `=`},
+	{itmFieldText, `"Goossens, Michel"`},
+	{itmRightBrace, `}`},
+}
+
+func TestLexerPreamble(t *testing.T) {
+	r := newReader(testTexPreamble())
 	result := []item{}
 	l := newLexer(r)
 	itm := l.item()
@@ -53,8 +91,42 @@ func TestLexer(t *testing.T) {
 		result = append(result, itm)
 		itm = l.item()
 	}
-	if ok := reflect.DeepEqual(items, result); !ok {
-		t.Errorf("want %v; have: %v", items, result)
+	if ok := reflect.DeepEqual(preambleItems, result); !ok {
+		t.Errorf("want %v; have: %v", entryItems, result)
+	}
+}
+
+func TestLexerEntry(t *testing.T) {
+	r := newReader(testTexEntry())
+	result := []item{}
+	l := newLexer(r)
+	itm := l.item()
+	for {
+		if itm.t == itmEOF || itm.t == itmErr {
+			break
+		}
+		result = append(result, itm)
+		itm = l.item()
+	}
+	if ok := reflect.DeepEqual(entryItems, result); !ok {
+		t.Errorf("want %v; have: %v", entryItems, result)
+	}
+}
+
+func TextLexerString(t *testing.T) {
+	r := newReader(testTexString())
+	result := []item{}
+	l := newLexer(r)
+	itm := l.item()
+	for {
+		if itm.t == itmEOF || itm.t == itmErr {
+			break
+		}
+		result = append(result, itm)
+		itm = l.item()
+	}
+	if ok := reflect.DeepEqual(preambleItems, result); !ok {
+		t.Errorf("want %v; have: %v", entryItems, result)
 	}
 }
 
@@ -157,7 +229,6 @@ func TestIsProperQuoted(t *testing.T) {
 		{"quote-pages", `"1234--5843"`, true},
 		{"simple-missing", `"Pale {F}ire`, false},
 		{"elaborate-missing", `{Pale "{Fire"}`, false},
-		{"no-quotes", `The University of Arizona`, false},
 		{"empty", ``, false},
 	}
 	for _, c := range cases {

@@ -5,25 +5,23 @@ import (
 	"testing"
 )
 
-var text = `
-@article{Cohen1963,
-  author   = "P. J. Cohen, M. R. Thompson",
-  title    = {The independence of {,} the hypothesis},
-  journal  = "Proceedings of the {Academy} of Sciences",
-  year     = 1963,
-  volume   = "50",
-  number   = "6",
-  pages    = "1143--1148"
+func testTexEntry() *strings.Reader {
+	r := strings.NewReader(texEntry)
+	return r
 }
-`
 
-func testEntry() *strings.Reader {
-	r := strings.NewReader(text)
+func testTexString() *strings.Reader {
+	r := strings.NewReader(texStrings)
+	return r
+}
+
+func testTexPreamble() *strings.Reader {
+	r := strings.NewReader(texPreamble)
 	return r
 }
 
 func TestCharReader(t *testing.T) {
-	r := newReader(testEntry())
+	r := newReader(testTexEntry())
 	result := []byte{}
 outer:
 	for {
@@ -33,7 +31,7 @@ outer:
 		}
 		result = append(result, byte(char.val))
 	}
-	if string(result) != text {
-		t.Errorf("want %s; have %s", string(result), text)
+	if string(result) != texEntry {
+		t.Errorf("want %s; have %s", string(result), texEntry)
 	}
 }

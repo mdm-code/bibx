@@ -11,23 +11,23 @@ const (
 	charOk
 )
 
-// readable defines the reader interface expected by the lexer.
+// Readable defines the reader interface expected by the lexer.
 type readable interface {
 	next() char
 	revert() error
 }
 
-// charStatus describes the status of the read character.
+// CharStatus describes the status of the read character.
 type charStatus uint8
 
-// char is a single character returned from the reader.
+// Char is a single character returned from the reader.
 type char struct {
 	t    charStatus
 	size int
 	val  rune
 }
 
-// reader handles reading a file and exposing character elements.
+// Reader handles reading a file and exposing character elements.
 type reader struct {
 	buf *bufio.Reader
 	pos int
