@@ -1,4 +1,4 @@
-package parse
+package scan
 
 import (
 	"bufio"
@@ -13,8 +13,8 @@ const (
 
 // Readable defines the reader interface expected by the lexer.
 type readable interface {
-	next() char
-	revert() error
+	Next() char
+	Revert() error
 }
 
 // CharStatus describes the status of the read character.
@@ -28,18 +28,18 @@ type char struct {
 }
 
 // Reader handles reading a file and exposing character elements.
-type reader struct {
+type Reader struct {
 	buf *bufio.Reader
 	pos int
 }
 
 // NewReader instantiates a new reader.
-func newReader(r io.Reader) *reader {
-	return &reader{bufio.NewReader(r), 0}
+func NewReader(r io.Reader) *Reader {
+	return &Reader{bufio.NewReader(r), 0}
 }
 
 // Next returns the next available character.
-func (r *reader) next() char {
+func (r *Reader) Next() char {
 	if c, s, err := r.buf.ReadRune(); err != nil {
 		if err == io.EOF {
 			return char{t: charEOF, size: s, val: c}
@@ -52,6 +52,6 @@ func (r *reader) next() char {
 }
 
 // Revert unreads a single rune from the buffer.
-func (r *reader) revert() error {
+func (r *Reader) Revert() error {
 	return r.buf.UnreadRune()
 }
