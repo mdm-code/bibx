@@ -27,7 +27,7 @@ install:
 .PHONY: install
 
 build:
-	$(GO) build $(GOFLAGS) github.com/mdm-code/pbx/...
+	$(GO) build $(GOFLAGS) github.com/mdm-code/bibx/...
 .PHONY: build
 
 cover:
@@ -36,7 +36,7 @@ cover:
 .PHONY: cover
 
 clean:
-	$(GO) clean github.com/mdm-code/pbx/...
+	$(GO) clean github.com/mdm-code/bibx/...
 	$(GO) mod tidy
 	$(GO) clean -testcache -cache
 	rm -f $(COV_PROFILE)

@@ -1,4 +1,4 @@
-package parse
+package scan
 
 import (
 	"reflect"
@@ -6,90 +6,100 @@ import (
 )
 
 var texEntry = `
-@article{Cohen1963,
-  author   = "P. J. Cohen, M. R. Thompson",
+% The author never intended to write this book.
+@article(Cohen1963,
+  % this is a comment.
+  % the next line is just to test this.
+  author   = "P. J. C{\"o}hen, M. R. Thompson",
   title    = {The independence of {,} the hypothesis},
-  journal  = "Proceedings of the {Academy} of Sciences",
-  year     = 1963,
+  journal  = "Proceedings of the $\eq{2}$ {Academy} of Sciences",
+  year     = 1963, % this is a comment.
   volume   = "50",
   number   = "6",
-  pages    = "1143--1148"
-}
+  pages    = "1143--1148" % this is a comment.
+  % this is a comment.
+)
 `
 
 var texPreamble = `
-@preamble{ "\@ifundefined{url}{\def\url#1{\texttt{#1}}}{}" }
+@PREAMBLE{ "\@ifundefined{url}{\def\url#1{\texttt{#1}}}{}" }
 `
 
 var texStrings = `
 @string{goossens = "Goossens, Michel"}
 `
 
-var entryItems = []item{
-	{itmEntryDelim, `@`},
-	{itmEntryType, `article`},
-	{itmLeftBrace, `{`},
-	{itmCiteKey, `Cohen1963`},
-	{itmComma, `,`},
-	{itmFieldType, `author`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `"P. J. Cohen, M. R. Thompson"`},
-	{itmComma, `,`},
-	{itmFieldType, `title`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `{The independence of {,} the hypothesis}`},
-	{itmComma, `,`},
-	{itmFieldType, `journal`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `"Proceedings of the {Academy} of Sciences"`},
-	{itmComma, `,`},
-	{itmFieldType, `year`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `1963`},
-	{itmComma, `,`},
-	{itmFieldType, `volume`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `"50"`},
-	{itmComma, `,`},
-	{itmFieldType, `number`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `"6"`},
-	{itmComma, `,`},
-	{itmFieldType, `pages`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `"1143--1148"`},
-	{itmRightBrace, `}`},
+var entryItems = []Item{
+	{ItemComment, `% The author never intended to write this book.`},
+	{ItemEntryDelim, `@`},
+	{ItemEntry, `article`},
+	{ItemLeftDelim, `(`},
+	{ItemCiteKey, `Cohen1963`},
+	{ItemComma, `,`},
+	{ItemComment, `this is a comment.`},
+	{ItemComment, `the next line is just to test this.`},
+	{ItemFieldType, `author`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `"P. J. C{\"o}hen, M. R. Thompson"`},
+	{ItemComma, `,`},
+	{ItemFieldType, `title`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `{The independence of {,} the hypothesis}`},
+	{ItemComma, `,`},
+	{ItemFieldType, `journal`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `"Proceedings of the $\eq{2}$ {Academy} of Sciences"`},
+	{ItemComma, `,`},
+	{ItemFieldType, `year`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `1963`},
+	{ItemComma, `,`},
+	{ItemComment, `this is a comment.`},
+	{ItemFieldType, `volume`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `"50"`},
+	{ItemComma, `,`},
+	{ItemFieldType, `number`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `"6"`},
+	{ItemComma, `,`},
+	{ItemFieldType, `pages`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `"1143--1148"`},
+	{ItemComment, `this is a comment.`},
+	{ItemComment, `this is a comment.`},
+	{ItemRightDelim, `)`},
 }
 
-var preambleItems = []item{
-	{itmEntryDelim, `@`},
-	{itmEntryType, `preamble`},
-	{itmLeftBrace, `{`},
-	{itmFieldText, `"\@ifundefined{url}{\def\url#1{\texttt{#1}}}{}"`},
-	{itmRightBrace, `}`},
+var preambleItems = []Item{
+	{ItemEntryDelim, `@`},
+	{ItemPreamble, `PREAMBLE`},
+	{ItemLeftDelim, `{`},
+	{ItemFieldText, `"\@ifundefined{url}{\def\url#1{\texttt{#1}}}{}"`},
+	{ItemRightDelim, `}`},
 }
 
-var stringItems = []item{
-	{itmEntryDelim, `@`},
-	{itmEntryType, `string`},
-	{itmLeftBrace, `{`},
-	{itmFieldType, `goossens`},
-	{itmEqSgn, `=`},
-	{itmFieldText, `"Goossens, Michel"`},
-	{itmRightBrace, `}`},
+var stringItems = []Item{
+	{ItemEntryDelim, `@`},
+	{ItemAbbrev, `string`},
+	{ItemLeftDelim, `{`},
+	{ItemFieldType, `goossens`},
+	{ItemEqSgn, `=`},
+	{ItemFieldText, `"Goossens, Michel"`},
+	{ItemRightDelim, `}`},
 }
 
 func TestLexerPreamble(t *testing.T) {
-	r := newReader(testTexPreamble())
-	result := []item{}
-	l := newLexer(r)
-	itm := l.item()
+	r := NewReader(testTexPreamble())
+	result := []Item{}
+	l := NewScanner(r)
+	itm := l.Next()
 	for {
-		if itm.t == itmEOF || itm.t == itmErr {
+		if itm.T == ItemEOF || itm.T == ItemErr {
 			break
 		}
 		result = append(result, itm)
-		itm = l.item()
+		itm = l.Next()
 	}
 	if ok := reflect.DeepEqual(preambleItems, result); !ok {
 		t.Errorf("want %v; have: %v", entryItems, result)
@@ -97,16 +107,16 @@ func TestLexerPreamble(t *testing.T) {
 }
 
 func TestLexerEntry(t *testing.T) {
-	r := newReader(testTexEntry())
-	result := []item{}
-	l := newLexer(r)
-	itm := l.item()
+	r := NewReader(testTexEntry())
+	result := []Item{}
+	l := NewScanner(r)
+	itm := l.Next()
 	for {
-		if itm.t == itmEOF || itm.t == itmErr {
+		if itm.T == ItemEOF || itm.T == ItemErr {
 			break
 		}
 		result = append(result, itm)
-		itm = l.item()
+		itm = l.Next()
 	}
 	if ok := reflect.DeepEqual(entryItems, result); !ok {
 		t.Errorf("want %v; have: %v", entryItems, result)
@@ -114,16 +124,16 @@ func TestLexerEntry(t *testing.T) {
 }
 
 func TextLexerString(t *testing.T) {
-	r := newReader(testTexString())
-	result := []item{}
-	l := newLexer(r)
-	itm := l.item()
+	r := NewReader(testTexString())
+	result := []Item{}
+	l := NewScanner(r)
+	itm := l.Next()
 	for {
-		if itm.t == itmEOF || itm.t == itmErr {
+		if itm.T == ItemEOF || itm.T == ItemErr {
 			break
 		}
 		result = append(result, itm)
-		itm = l.item()
+		itm = l.Next()
 	}
 	if ok := reflect.DeepEqual(preambleItems, result); !ok {
 		t.Errorf("want %v; have: %v", entryItems, result)
@@ -166,7 +176,7 @@ func TestValidCiteKey(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if have := isValidCiteKey(c.testInput); have != c.want {
+			if have := IsValidName(c.testInput); have != c.want {
 				t.Errorf("for %s :: have: %t; want: %t", c.testInput, have, c.want)
 			}
 		})
@@ -229,6 +239,7 @@ func TestIsProperQuoted(t *testing.T) {
 		{"quote-pages", `"1234--5843"`, true},
 		{"simple-missing", `"Pale {F}ire`, false},
 		{"elaborate-missing", `{Pale "{Fire"}`, false},
+		{"escaped-quotation-mark", `{C{\"o}hen}`, true},
 		{"empty", ``, false},
 	}
 	for _, c := range cases {

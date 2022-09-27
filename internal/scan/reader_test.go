@@ -1,4 +1,4 @@
-package parse
+package scan
 
 import (
 	"strings"
@@ -21,11 +21,11 @@ func testTexPreamble() *strings.Reader {
 }
 
 func TestCharReader(t *testing.T) {
-	r := newReader(testTexEntry())
+	r := NewReader(testTexEntry())
 	result := []byte{}
 outer:
 	for {
-		char := r.next()
+		char := r.Next()
 		if char.t == charErr || char.t == charEOF {
 			break outer
 		}
